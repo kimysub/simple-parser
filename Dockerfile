@@ -1,0 +1,12 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+COPY pyproject.toml .
+COPY src/ src/
+
+RUN pip install --no-cache-dir ".[api]"
+
+EXPOSE 8000
+
+CMD ["uvicorn", "simple_parser.api:app", "--host", "0.0.0.0", "--port", "8000"]

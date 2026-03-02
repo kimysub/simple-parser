@@ -1,0 +1,29 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./output:/app/output
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - OUTPUT_DIR=/app/output
+      - API_KEY=${API_KEY:-}
+    command: ["uvicorn", "simple_parser.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      - CONTENT_EXTRACTION_ENGINE=external
+      - EXTERNAL_DOCUMENT_LOADER_URL=http://api:8000
+      - EXTERNAL_DOCUMENT_LOADER_API_KEY=${API_KEY:-secret}
+    depends_on:
+      - api
+
+volumes:
+  open-webui-data:
