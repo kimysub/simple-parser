@@ -8,6 +8,7 @@ from simple_parser.md import (
     escape,
     unordered_list,
     ordered_list,
+    html_to_md,
 )
 
 
@@ -55,3 +56,58 @@ def test_unordered_list():
 def test_ordered_list():
     result = ordered_list(["a", "b", "c"])
     assert result == "1. a\n2. b\n3. c"
+
+
+def test_html_to_md_heading():
+    assert html_to_md("<h1>Title</h1>") == "# Title"
+    assert html_to_md("<h2>Sub</h2>") == "## Sub"
+
+
+def test_html_to_md_bold_italic():
+    assert html_to_md("<b>bold</b>") == "**bold**"
+    assert html_to_md("<strong>bold</strong>") == "**bold**"
+    assert html_to_md("<em>italic</em>") == "*italic*"
+    assert html_to_md("<i>italic</i>") == "*italic*"
+
+
+def test_html_to_md_link():
+    result = html_to_md('<a href="https://example.com">click</a>')
+    assert result == "[click](https://example.com)"
+
+
+def test_html_to_md_paragraphs():
+    result = html_to_md("<p>First.</p><p>Second.</p>")
+    assert "First." in result
+    assert "Second." in result
+    assert "\n\n" in result
+
+
+def test_html_to_md_lists():
+    result = html_to_md("<ul><li>a</li><li>b</li></ul>")
+    assert "- a" in result
+    assert "- b" in result
+
+    result = html_to_md("<ol><li>x</li><li>y</li></ol>")
+    assert "1. x" in result
+    assert "2. y" in result
+
+
+def test_html_to_md_code():
+    assert "`code`" in html_to_md("<code>code</code>")
+
+
+def test_html_to_md_pre():
+    result = html_to_md("<pre>line1\nline2</pre>")
+    assert "```" in result
+    assert "line1" in result
+
+
+def test_html_to_md_img():
+    result = html_to_md('<img src="pic.png" alt="photo">')
+    assert result == "![photo](pic.png)"
+
+
+def test_html_to_md_strips_unknown_tags():
+    result = html_to_md("<span>text</span>")
+    assert "text" in result
+    assert "<span>" not in result

@@ -2,27 +2,8 @@
 
 import email
 import email.policy
-from html.parser import HTMLParser
 
-
-class _TagStripper(HTMLParser):
-    """Minimal HTML tag stripper."""
-
-    def __init__(self):
-        super().__init__()
-        self._parts: list[str] = []
-
-    def handle_data(self, data: str) -> None:
-        self._parts.append(data)
-
-    def get_text(self) -> str:
-        return "".join(self._parts)
-
-
-def _strip_html(html: str) -> str:
-    s = _TagStripper()
-    s.feed(html)
-    return s.get_text()
+from simple_parser import md
 
 
 def parse(path: str) -> str:
@@ -42,4 +23,4 @@ def parse(path: str) -> str:
             if part.get_content_type() == "text/plain":
                 return part.get_content().strip()
 
-    return _strip_html(html).strip()
+    return md.html_to_md(html)
