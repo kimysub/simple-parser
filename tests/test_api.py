@@ -1,11 +1,14 @@
 """Tests for the FastAPI endpoints."""
 
+import shutil
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 from simple_parser.api import app
+
+_has_libreoffice = bool(shutil.which("libreoffice"))
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -20,7 +23,21 @@ def test_health():
     assert resp.json() == {"status": "ok"}
 
 
-@pytest.mark.parametrize("name", ["sample.docx", "sample.pptx", "sample.xlsx", "sample.pdf"])
+_ALL_FORMATS = [
+    "sample.docx", "sample.pptx", "sample.xlsx", "sample.pdf",
+    "sample.txt", "sample.eml", "sample.mht", "sample.md", "sample.xls",
+    pytest.param("sample.doc", marks=pytest.mark.skipif(
+        not _has_libreoffice or not (FIXTURES_DIR / "sample.doc").exists(),
+        reason="LibreOffice or fixture not available",
+    )),
+    pytest.param("sample.ppt", marks=pytest.mark.skipif(
+        not _has_libreoffice or not (FIXTURES_DIR / "sample.ppt").exists(),
+        reason="LibreOffice or fixture not available",
+    )),
+]
+
+
+@pytest.mark.parametrize("name", _ALL_FORMATS)
 def test_parse_supported_formats(name):
     path = FIXTURES_DIR / name
     with open(path, "rb") as f:
@@ -35,7 +52,7 @@ def test_parse_supported_formats(name):
 
 
 def test_unsupported_format():
-    resp = client.post("/parse", files={"file": ("test.txt", b"hello")})
+    resp = client.post("/parse", files={"file": ("test.xyz", b"hello")})
     assert resp.status_code == 400
     assert "Unsupported format" in resp.json()["detail"]
 
@@ -56,7 +73,7 @@ def test_missing_file_returns_422():
 PROCESS_EXPECTED_KEYS = {"page_content", "metadata"}
 
 
-@pytest.mark.parametrize("name", ["sample.docx", "sample.pptx", "sample.xlsx", "sample.pdf"])
+@pytest.mark.parametrize("name", _ALL_FORMATS)
 def test_process_supported_formats(name):
     path = FIXTURES_DIR / name
     resp = client.put(
@@ -89,7 +106,7 @@ def test_process_unsupported():
     resp = client.put(
         "/process",
         content=b"hello",
-        headers={"X-Filename": "test.txt"},
+        headers={"X-Filename": "test.xyz"},
     )
     assert resp.status_code == 400
     assert "Unsupported format" in resp.json()["detail"]

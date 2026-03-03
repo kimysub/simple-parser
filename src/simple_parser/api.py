@@ -9,7 +9,19 @@ from urllib.parse import unquote
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 
-from simple_parser import parser_docx, parser_pdf, parser_pptx, parser_xlsx
+from simple_parser import (
+    parser_doc,
+    parser_docx,
+    parser_eml,
+    parser_md,
+    parser_mht,
+    parser_pdf,
+    parser_ppt,
+    parser_pptx,
+    parser_txt,
+    parser_xls,
+    parser_xlsx,
+)
 
 app = FastAPI(title="simple-parser")
 
@@ -20,6 +32,14 @@ PARSERS = {
     ".pptx": parser_pptx.parse,
     ".xlsx": parser_xlsx.parse,
     ".pdf": parser_pdf.parse,
+    ".xls": parser_xls.parse,
+    ".doc": parser_doc.parse,
+    ".ppt": parser_ppt.parse,
+    ".txt": parser_txt.parse,
+    ".eml": parser_eml.parse,
+    ".mht": parser_mht.parse,
+    ".mhtml": parser_mht.parse,
+    ".md": parser_md.parse,
 }
 
 SUPPORTED = ", ".join(PARSERS)
@@ -29,6 +49,13 @@ MIME_TO_EXT = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
     "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+    "application/vnd.ms-excel": ".xls",
+    "application/msword": ".doc",
+    "application/vnd.ms-powerpoint": ".ppt",
+    "text/plain": ".txt",
+    "message/rfc822": ".eml",
+    "multipart/related": ".mht",
+    "text/markdown": ".md",
 }
 
 

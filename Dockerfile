@@ -5,6 +5,10 @@ WORKDIR /app
 COPY pyproject.toml .
 COPY src/ src/
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libreoffice-writer libreoffice-impress \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN pip install --no-cache-dir ".[api]"
 
 EXPOSE 8000

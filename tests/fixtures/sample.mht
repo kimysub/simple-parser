@@ -1,0 +1,8 @@
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary="boundary123"
+
+--boundary123
+Content-Type: text/html; charset=utf-8
+
+<html><body><p>Hello from MHT</p></body></html>
+--boundary123--

@@ -22,10 +22,6 @@ env/
 htmlcov/
 
 # Output
-*.pdf
-*.docx
-*.xlsx
-*.pptx
 output/
 
 # OS

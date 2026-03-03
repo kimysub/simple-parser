@@ -11,8 +11,9 @@
 | Phase 6 | CLI integration & E2E (error handling, `-o` flag, all format dispatch) | 9 tests in `test_cli.py` | PASS |
 | Phase 7 | API & Docker (FastAPI endpoints, Dockerfile, docker-compose) | 8 tests in `test_api.py` | PASS |
 | Phase 8 | Open WebUI integration (`PUT /process`, API key auth, MIME fallback) | 10 tests in `test_api.py` | PASS |
+| Phase 9 | Expanded file type support (xls, doc, ppt, txt, eml, mht, md) | 4 `test_xls` + 3 `test_doc` + 3 `test_ppt` + 5 `test_txt` + 4 `test_eml` + 3 `test_mht` + 2 `test_md_parser` + updated CLI/API | PASS |
 
-**Total: 54 tests, 0 failures**
+**Total: 97 tests (87 passed, 10 skipped without LibreOffice)**
 
 ### Verification Commands
 ```bash
@@ -30,4 +31,11 @@ python -m pytest tests/test_xlsx.py -v    # Phase 4
 python -m pytest tests/test_pdf.py -v     # Phase 5
 python -m pytest tests/test_cli.py -v     # Phase 6
 python -m pytest tests/test_api.py -v     # Phase 7 & 8
+python -m pytest tests/test_xls.py -v     # Phase 9 (XLS)
+python -m pytest tests/test_doc.py -v     # Phase 9 (DOC, requires LibreOffice)
+python -m pytest tests/test_ppt.py -v     # Phase 9 (PPT, requires LibreOffice)
+python -m pytest tests/test_txt.py -v     # Phase 9 (TXT)
+python -m pytest tests/test_eml.py -v     # Phase 9 (EML)
+python -m pytest tests/test_mht.py -v     # Phase 9 (MHT)
+python -m pytest tests/test_md_parser.py -v  # Phase 9 (MD)
 ```

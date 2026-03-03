@@ -1,6 +1,6 @@
 # Simple Parser
 
-CLI tool to parse document files (docx, pptx, xlsx, pdf) into Markdown.
+CLI tool to parse document files into Markdown. Supports 11 formats.
 
 ## Features
 
@@ -8,6 +8,13 @@ CLI tool to parse document files (docx, pptx, xlsx, pdf) into Markdown.
 - **PPTX**: Slide titles, body text, correct slide ordering
 - **XLSX**: Sheet names, shared strings, numeric values → markdown tables
 - **PDF**: Text extraction via PyMuPDF, font-size based heading detection
+- **XLS**: Legacy Excel (BIFF) via xlrd → markdown tables
+- **DOC**: Legacy Word via LibreOffice headless conversion → DOCX parser
+- **PPT**: Legacy PowerPoint via LibreOffice headless conversion → PPTX parser
+- **TXT**: Plain text with BOM-aware encoding detection (UTF-8, UTF-16LE/BE, latin-1 fallback)
+- **EML**: Email files — Subject/From/Date headers + text body + attachment list
+- **MHT/MHTML**: Web archive files — MIME HTML parsing with tag stripping
+- **MD**: Markdown pass-through
 - **API**: FastAPI web server with `POST /parse` and `PUT /process` endpoints for HTTP-based parsing
 - **Open WebUI**: Compatible with Open WebUI's external document loader (`CONTENT_EXTRACTION_ENGINE=external`)
 - No OCR — fast, lightweight, XML-based parsing for Office formats
@@ -16,6 +23,8 @@ CLI tool to parse document files (docx, pptx, xlsx, pdf) into Markdown.
 
 - Python 3.10+
 - PyMuPDF (`pymupdf`) for PDF support
+- xlrd for XLS support
+- LibreOffice (optional) for DOC/PPT support
 
 ## Installation
 
@@ -40,6 +49,13 @@ simple-parser document.docx
 simple-parser presentation.pptx
 simple-parser spreadsheet.xlsx
 simple-parser report.pdf
+simple-parser legacy.xls
+simple-parser legacy.doc          # requires LibreOffice
+simple-parser legacy.ppt          # requires LibreOffice
+simple-parser notes.txt
+simple-parser message.eml
+simple-parser archive.mht
+simple-parser readme.md
 
 # Save to file
 simple-parser document.docx -o output.md
@@ -106,6 +122,13 @@ src/simple_parser/
   parser_pptx.py     # PPTX → Markdown
   parser_xlsx.py     # XLSX → Markdown
   parser_pdf.py      # PDF  → Markdown
+  parser_xls.py      # XLS  → Markdown (xlrd)
+  parser_doc.py      # DOC  → Markdown (LibreOffice → DOCX)
+  parser_ppt.py      # PPT  → Markdown (LibreOffice → PPTX)
+  parser_txt.py      # TXT  → Markdown (BOM-aware encoding)
+  parser_eml.py      # EML  → Markdown (email headers + body)
+  parser_mht.py      # MHT  → Markdown (MIME HTML strip)
+  parser_md.py       # MD   → pass-through
 ```
 
 ## How It Works
@@ -113,6 +136,10 @@ src/simple_parser/
 Office formats (docx, pptx, xlsx) are ZIP archives containing XML. The parsers use Python's stdlib `zipfile` + `xml.etree.ElementTree` to extract content — no external Office dependencies needed.
 
 PDF parsing uses PyMuPDF (`fitz`) for non-OCR text extraction with a font-size heuristic for heading detection.
+
+Legacy Office formats (doc, ppt) are converted to their modern equivalents via LibreOffice headless, then parsed with existing parsers. XLS (BIFF) is parsed directly with xlrd.
+
+Text-based formats (txt, eml, mht, md) use Python stdlib only.
 
 ## API Endpoints
 

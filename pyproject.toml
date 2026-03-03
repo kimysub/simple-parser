@@ -5,10 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "simple-parser"
 version = "0.1.0"
-description = "CLI tool to parse document files (docx, pptx, xlsx, pdf) into Markdown"
+description = "CLI tool to parse document files (docx, pptx, xlsx, pdf, xls, doc, ppt, txt, eml, mht, md) into Markdown"
 requires-python = ">=3.10"
 dependencies = [
     "pymupdf>=1.24",
+    "xlrd>=2.0",
 ]
 
 [project.optional-dependencies]

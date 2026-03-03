@@ -29,7 +29,7 @@ def test_file_not_found():
 
 
 def test_unsupported_format(tmp_path):
-    f = tmp_path / "test.txt"
+    f = tmp_path / "test.xyz"
     f.write_text("hello")
     result = run_cli(str(f))
     assert result.returncode == 1
@@ -66,6 +66,36 @@ def test_pdf_stdout():
     result = run_cli(str(FIXTURES / "sample.pdf"))
     assert result.returncode == 0
     assert "Big Heading" in result.stdout
+
+
+def test_txt_stdout():
+    result = run_cli(str(FIXTURES / "sample.txt"))
+    assert result.returncode == 0
+    assert "Hello world" in result.stdout
+
+
+def test_eml_stdout():
+    result = run_cli(str(FIXTURES / "sample.eml"))
+    assert result.returncode == 0
+    assert "Test Subject" in result.stdout
+
+
+def test_mht_stdout():
+    result = run_cli(str(FIXTURES / "sample.mht"))
+    assert result.returncode == 0
+    assert "Hello from MHT" in result.stdout
+
+
+def test_md_stdout():
+    result = run_cli(str(FIXTURES / "sample.md"))
+    assert result.returncode == 0
+    assert "# Heading" in result.stdout
+
+
+def test_xls_stdout():
+    result = run_cli(str(FIXTURES / "sample.xls"))
+    assert result.returncode == 0
+    assert "Sheet: Data" in result.stdout
 
 
 def test_output_flag(tmp_path):

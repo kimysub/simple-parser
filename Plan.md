@@ -2,8 +2,8 @@
 
 ## Context
 
-**Problem**: CLI tool to parse document files (docx, pptx, xlsx, pdf) into Markdown format.
-**Constraints**: XML-based parsing for Office formats (ZIP archives containing XML), no OCR for PDF, prioritize simplicity and speed.
+**Problem**: CLI tool to parse document files (docx, pptx, xlsx, pdf, xls, doc, ppt, txt, eml, mht/mhtml, md) into Markdown format.
+**Constraints**: XML-based parsing for Office formats (ZIP archives containing XML), no OCR for PDF, prioritize simplicity and speed. Legacy Office formats via LibreOffice headless conversion.
 
 ---
 
@@ -24,6 +24,13 @@ simple-parser/
     parser_pptx.py                  # PPTX -> Markdown
     parser_xlsx.py                  # XLSX -> Markdown
     parser_pdf.py                   # PDF  -> Markdown
+    parser_xls.py                   # XLS  -> Markdown (xlrd)
+    parser_doc.py                   # DOC  -> Markdown (LibreOffice → DOCX)
+    parser_ppt.py                   # PPT  -> Markdown (LibreOffice → PPTX)
+    parser_txt.py                   # TXT  -> Markdown (BOM-aware encoding)
+    parser_eml.py                   # EML  -> Markdown (email headers + body)
+    parser_mht.py                   # MHT  -> Markdown (MIME HTML strip)
+    parser_md.py                    # MD   -> pass-through
   tests/
     __init__.py
     conftest.py                     # Shared fixtures
@@ -33,6 +40,13 @@ simple-parser/
     test_pptx.py
     test_xlsx.py
     test_pdf.py
+    test_xls.py
+    test_doc.py
+    test_ppt.py
+    test_txt.py
+    test_eml.py
+    test_mht.py
+    test_md_parser.py
     test_cli.py
     test_api.py
   Dockerfile
@@ -44,8 +58,10 @@ simple-parser/
 ### Dependencies
 | Dependency | Purpose | Type |
 |---|---|---|
-| `zipfile`, `xml.etree.ElementTree`, `argparse`, `pathlib`, `re` | Office XML parsing, CLI | stdlib |
+| `zipfile`, `xml.etree.ElementTree`, `argparse`, `pathlib`, `re`, `email` | Office XML parsing, CLI, email/MHT parsing | stdlib |
 | `pymupdf` (PyMuPDF) | PDF text extraction (no OCR) | external |
+| `xlrd` | XLS (BIFF) spreadsheet parsing | external |
+| LibreOffice | DOC/PPT → DOCX/PPTX headless conversion | system (optional) |
 | `fastapi`, `uvicorn`, `python-multipart` | Web API server | optional (`[api]`) |
 | `pytest`, `httpx`, `ruff` | Testing, linting | optional (`[dev]`) |
 
@@ -118,3 +134,11 @@ Each parser exposes: `def parse(path: str) -> str` returning a Markdown string.
 - Add `open-webui` service to `docker-compose.yml` with `CONTENT_EXTRACTION_ENGINE=external`
 - 10 new tests in `test_api.py` (4 parametrized format tests + 6 specific tests)
 - **Verify**: `pytest tests/` all green (54 tests), `docker compose up` starts both services
+
+### Phase 9: Expanded File Type Support
+- Add 7 new format parsers: XLS (xlrd), DOC/PPT (LibreOffice headless), TXT (BOM-aware), EML (email), MHT/MHTML (MIME HTML), MD (pass-through)
+- Register all new parsers in `cli.py` and `api.py` (PARSERS dict + MIME_TO_EXT)
+- Add `xlrd>=2.0` dependency, LibreOffice to Dockerfile
+- 7 new parser test files + updated CLI/API tests (parametrized for 11 formats)
+- DOC/PPT tests skip when LibreOffice is not installed
+- **Verify**: `pytest tests/` all green (87 passed, 10 skipped without LibreOffice)
