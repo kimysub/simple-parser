@@ -5,13 +5,33 @@ import sys
 import zipfile
 from pathlib import Path
 
-from simple_parser import parser_docx, parser_pptx, parser_xlsx, parser_pdf
+from simple_parser import (
+    parser_doc,
+    parser_docx,
+    parser_eml,
+    parser_md,
+    parser_mht,
+    parser_pdf,
+    parser_ppt,
+    parser_pptx,
+    parser_txt,
+    parser_xls,
+    parser_xlsx,
+)
 
 PARSERS = {
     ".docx": parser_docx.parse,
     ".pptx": parser_pptx.parse,
     ".xlsx": parser_xlsx.parse,
     ".pdf": parser_pdf.parse,
+    ".xls": parser_xls.parse,
+    ".doc": parser_doc.parse,
+    ".ppt": parser_ppt.parse,
+    ".txt": parser_txt.parse,
+    ".eml": parser_eml.parse,
+    ".mht": parser_mht.parse,
+    ".mhtml": parser_mht.parse,
+    ".md": parser_md.parse,
 }
 
 SUPPORTED = ", ".join(PARSERS)
@@ -20,7 +40,7 @@ SUPPORTED = ", ".join(PARSERS)
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         prog="simple-parser",
-        description="Parse document files (docx, pptx, xlsx, pdf) into Markdown.",
+        description="Parse document files (docx, pptx, xlsx, pdf, xls, doc, ppt, txt, eml, mht, md) into Markdown.",
     )
     parser.add_argument("file", help="Path to the document file")
     parser.add_argument(

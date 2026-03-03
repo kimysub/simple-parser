@@ -3,6 +3,7 @@
 Run once:  python tests/make_fixtures.py
 """
 
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -239,8 +240,125 @@ def make_xlsx():
     print(f"Created {path}")
 
 
+def make_txt():
+    """Create a minimal .txt fixture."""
+    path = FIXTURES / "sample.txt"
+    path.write_text("Hello world\nSecond line.", encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_eml():
+    """Create a minimal .eml fixture."""
+    path = FIXTURES / "sample.eml"
+    eml_content = (
+        "From: sender@example.com\r\n"
+        "To: receiver@example.com\r\n"
+        "Subject: Test Subject\r\n"
+        "Date: Mon, 01 Jan 2024 00:00:00 +0000\r\n"
+        "MIME-Version: 1.0\r\n"
+        "Content-Type: text/plain; charset=utf-8\r\n"
+        "\r\n"
+        "This is the email body.\r\n"
+    )
+    path.write_text(eml_content, encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_mht():
+    """Create a minimal .mht fixture."""
+    path = FIXTURES / "sample.mht"
+    mht_content = (
+        "MIME-Version: 1.0\r\n"
+        "Content-Type: multipart/related; boundary=\"boundary123\"\r\n"
+        "\r\n"
+        "--boundary123\r\n"
+        "Content-Type: text/html; charset=utf-8\r\n"
+        "\r\n"
+        "<html><body><p>Hello from MHT</p></body></html>\r\n"
+        "--boundary123--\r\n"
+    )
+    path.write_text(mht_content, encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_md():
+    """Create a minimal .md fixture."""
+    path = FIXTURES / "sample.md"
+    path.write_text("# Heading\n\nParagraph text.", encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_xls():
+    """Create a minimal .xls fixture using xlwt."""
+    try:
+        import xlwt
+    except ImportError:
+        print("Skipping sample.xls (xlwt not installed)")
+        return
+
+    wb = xlwt.Workbook()
+    ws = wb.add_sheet("Data")
+    ws.write(0, 0, "Name")
+    ws.write(0, 1, "Age")
+    ws.write(1, 0, "Alice")
+    ws.write(1, 1, 30)
+
+    path = FIXTURES / "sample.xls"
+    wb.save(str(path))
+    print(f"Created {path}")
+
+
+def make_doc():
+    """Create sample.doc by converting sample.docx via LibreOffice."""
+    if not shutil.which("libreoffice"):
+        print("Skipping sample.doc (LibreOffice not installed)")
+        return
+    import subprocess
+    src = FIXTURES / "sample.docx"
+    if not src.exists():
+        print("Skipping sample.doc (sample.docx not found)")
+        return
+    result = subprocess.run(
+        ["libreoffice", "--headless", "--convert-to", "doc", "--outdir", str(FIXTURES), str(src)],
+        capture_output=True,
+        timeout=60,
+    )
+    if result.returncode == 0:
+        print(f"Created {FIXTURES / 'sample.doc'}")
+    else:
+        print(f"Failed to create sample.doc: {result.stderr.decode()}")
+
+
+def make_ppt():
+    """Create sample.ppt by converting sample.pptx via LibreOffice."""
+    if not shutil.which("libreoffice"):
+        print("Skipping sample.ppt (LibreOffice not installed)")
+        return
+    import subprocess
+    src = FIXTURES / "sample.pptx"
+    if not src.exists():
+        print("Skipping sample.ppt (sample.pptx not found)")
+        return
+    result = subprocess.run(
+        ["libreoffice", "--headless", "--convert-to", "ppt", "--outdir", str(FIXTURES), str(src)],
+        capture_output=True,
+        timeout=60,
+    )
+    if result.returncode == 0:
+        print(f"Created {FIXTURES / 'sample.ppt'}")
+    else:
+        print(f"Failed to create sample.ppt: {result.stderr.decode()}")
+
+
 if __name__ == "__main__":
     make_docx()
     make_pptx()
     make_xlsx()
+    make_txt()
+    make_eml()
+    make_mht()
+    make_md()
+    make_xls()
+    make_doc()
+    make_ppt()
     print("Done.")

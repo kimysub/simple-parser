@@ -13,7 +13,9 @@ pip install -e .
 simple-parser path/to/file.docx
 ```
 
-Supported formats: `.docx`, `.pptx`, `.xlsx`, `.pdf`
+Supported formats: `.docx`, `.pptx`, `.xlsx`, `.pdf`, `.xls`, `.doc`, `.ppt`, `.txt`, `.eml`, `.mht`/`.mhtml`, `.md`
+
+> `.doc` and `.ppt` require LibreOffice to be installed.
 
 ## 3. Save output to a file
 
@@ -30,7 +32,7 @@ markdown = parse("document.docx")
 print(markdown)
 ```
 
-Each parser module (`parser_docx`, `parser_pptx`, `parser_xlsx`, `parser_pdf`) exposes the same `parse(path) -> str` function.
+Each parser module (`parser_docx`, `parser_pptx`, `parser_xlsx`, `parser_pdf`, `parser_xls`, `parser_doc`, `parser_ppt`, `parser_txt`, `parser_eml`, `parser_mht`, `parser_md`) exposes the same `parse(path) -> str` function.
 
 ## 5. Run the API server
 
@@ -68,7 +70,7 @@ docker compose up
 # simple-parser API: http://localhost:8000
 ```
 
-Open WebUI will automatically use simple-parser for docx/pptx/xlsx/pdf parsing in Knowledge Base uploads.
+Open WebUI will automatically use simple-parser for all supported format parsing in Knowledge Base uploads.
 
 ## 8. Run tests
 
