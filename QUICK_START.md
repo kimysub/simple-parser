@@ -13,15 +13,24 @@ pip install -e .
 simple-parser path/to/file.docx
 ```
 
-Supported formats: `.docx`, `.pptx`, `.xlsx`, `.pdf`, `.xls`, `.doc`, `.ppt`, `.txt`, `.eml`, `.mht`/`.mhtml`, `.md`
+Supported formats: `.docx`, `.pptx`, `.xlsx`, `.pdf`, `.xls`, `.doc`, `.ppt`, `.txt`, `.eml`, `.mht`/`.mhtml`, `.md`, `.json`, `.yaml`/`.yml`, `.xml`, `.csv`, `.tsv`, `.toml`, `.ini`/`.cfg`
 
 > `.doc` and `.ppt` require LibreOffice to be installed.
+> PDF math equations may render incorrectly — this is a known limitation of text-based PDF extraction.
 
 ## 3. Save output to a file
 
 ```bash
 simple-parser report.pdf -o report.md
 ```
+
+## 3a. RAG-optimized clean text
+
+```bash
+simple-parser document.docx --clean
+```
+
+The `--clean` flag strips markdown formatting, linearizes tables to key-value rows, and removes slide numbering — optimized for embedding models and RAG pipelines.
 
 ## 4. Use as a library
 
@@ -32,7 +41,7 @@ markdown = parse("document.docx")
 print(markdown)
 ```
 
-Each parser module (`parser_docx`, `parser_pptx`, `parser_xlsx`, `parser_pdf`, `parser_xls`, `parser_doc`, `parser_ppt`, `parser_txt`, `parser_eml`, `parser_mht`, `parser_md`) exposes the same `parse(path) -> str` function.
+Each parser module (`parser_docx`, `parser_pptx`, `parser_xlsx`, `parser_pdf`, `parser_xls`, `parser_doc`, `parser_ppt`, `parser_txt`, `parser_eml`, `parser_mht`, `parser_md`, `parser_json`, `parser_yaml`, `parser_xml`, `parser_csv`, `parser_tsv`, `parser_toml`, `parser_ini`) exposes the same `parse(path) -> str` function.
 
 ## 5. Run the API server
 
@@ -70,7 +79,7 @@ docker compose up
 # simple-parser API: http://localhost:8000
 ```
 
-Open WebUI will automatically use simple-parser for all supported format parsing in Knowledge Base uploads.
+Open WebUI will automatically use simple-parser for all supported format parsing in Knowledge Base uploads. The `PUT /process` endpoint returns RAG-optimized clean text (no markdown formatting) for better embedding quality.
 
 ## 8. Run tests
 

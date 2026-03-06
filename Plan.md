@@ -2,8 +2,8 @@
 
 ## Context
 
-**Problem**: CLI tool to parse document files (docx, pptx, xlsx, pdf, xls, doc, ppt, txt, eml, mht/mhtml, md) into Markdown format.
-**Constraints**: XML-based parsing for Office formats (ZIP archives containing XML), no OCR for PDF, prioritize simplicity and speed. Legacy Office formats via LibreOffice headless conversion.
+**Problem**: CLI tool to parse document files (docx, pptx, xlsx, pdf, xls, doc, ppt, txt, eml, mht/mhtml, md, json, yaml, xml, csv, tsv, toml, ini) into Markdown format.
+**Constraints**: XML-based parsing for Office formats (ZIP archives containing XML), no OCR for PDF, prioritize simplicity and speed. Legacy Office formats via LibreOffice headless conversion. Text data formats use stdlib only.
 
 ---
 
@@ -29,8 +29,16 @@ simple-parser/
     parser_ppt.py                   # PPT  -> Markdown (LibreOffice → PPTX)
     parser_txt.py                   # TXT  -> Markdown (BOM-aware encoding)
     parser_eml.py                   # EML  -> Markdown (email headers + body)
-    parser_mht.py                   # MHT  -> Markdown (MIME HTML strip)
+    parser_mht.py                   # MHT  -> Markdown (MIME HTML-to-Markdown)
     parser_md.py                    # MD   -> pass-through
+    parser_json.py                  # JSON -> Markdown (pretty-printed code block)
+    parser_yaml.py                  # YAML -> Markdown (code block)
+    parser_xml.py                   # XML  -> Markdown (code block)
+    parser_csv.py                   # CSV  -> Markdown table
+    parser_tsv.py                   # TSV  -> Markdown table
+    parser_toml.py                  # TOML -> Markdown (code block)
+    parser_ini.py                   # INI  -> Markdown (code block)
+    rag.py                          # RAG post-processor (clean text for embedding)
   tests/
     __init__.py
     conftest.py                     # Shared fixtures
@@ -47,6 +55,7 @@ simple-parser/
     test_eml.py
     test_mht.py
     test_md_parser.py
+    test_rag.py
     test_cli.py
     test_api.py
   Dockerfile
@@ -108,6 +117,7 @@ Each parser exposes: `def parse(path: str) -> str` returning a Markdown string.
 - Use `fitz.open()` → `page.get_text("dict")` for text extraction
 - Heading detection via font-size heuristic (larger than modal body size → heading)
 - Pages separated by `---`
+- **Known limitation**: Mathematical equations may render incorrectly (PDFs store equations as positioned glyphs, not semantic math notation)
 - **Verify**: `pytest tests/test_pdf.py` passes
 
 ### Phase 6: CLI Integration & End-to-End
@@ -142,3 +152,23 @@ Each parser exposes: `def parse(path: str) -> str` returning a Markdown string.
 - 7 new parser test files + updated CLI/API tests (parametrized for 11 formats)
 - DOC/PPT tests skip when LibreOffice is not installed
 - **Verify**: `pytest tests/` all green (87 passed, 10 skipped without LibreOffice)
+
+### Phase 10: RAG Post-Processor
+- Add `rag.py` module with `clean_for_rag()` function for embedding-optimized text output
+- Strip markdown formatting (headings, bold, italic, code markers)
+- Linearize tables to key-value rows (`Name: Alice; Age: 30`)
+- Strip slide numbering prefixes, horizontal rules, image/link syntax
+- Apply automatically in `PUT /process` endpoint (Open WebUI RAG)
+- Add `--clean` CLI flag for same behavior
+- Add `html_to_md()` to `md.py` for proper HTML-to-Markdown conversion in EML/MHT parsers
+- **Verify**: `pytest tests/` all green (116 passed, 10 skipped without LibreOffice)
+
+### Phase 11: Text Data Format Support
+- Add 7 new text-based parsers: JSON (pretty-print), YAML, XML, CSV (→ table), TSV (→ table), TOML, INI
+- JSON pretty-prints with `json.dumps(indent=2)` and wraps in fenced code block
+- CSV/TSV parse with stdlib `csv` module and convert to markdown tables via `md.table()`
+- YAML, XML, TOML, INI wrap content in language-tagged fenced code blocks
+- Register all parsers in `cli.py` and `api.py` (PARSERS dict + MIME_TO_EXT)
+- Extensions: `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.tsv`, `.toml`, `.ini`, `.cfg`
+- No new external dependencies (stdlib only)
+- **Verify**: `pytest tests/` all green (146 passed, 10 skipped without LibreOffice)

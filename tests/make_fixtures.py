@@ -350,6 +350,58 @@ def make_ppt():
         print(f"Failed to create sample.ppt: {result.stderr.decode()}")
 
 
+def make_json():
+    """Create a minimal .json fixture."""
+    path = FIXTURES / "sample.json"
+    path.write_text('{"name": "Alice", "age": 30, "active": true}', encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_yaml():
+    """Create a minimal .yaml fixture."""
+    path = FIXTURES / "sample.yaml"
+    path.write_text("name: Alice\nage: 30\nactive: true\n", encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_xml():
+    """Create a minimal .xml fixture."""
+    path = FIXTURES / "sample.xml"
+    path.write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<root>\n  <item name="Alice" age="30"/>\n</root>\n',
+        encoding="utf-8",
+    )
+    print(f"Created {path}")
+
+
+def make_csv():
+    """Create a minimal .csv fixture."""
+    path = FIXTURES / "sample.csv"
+    path.write_text("Name,Age\nAlice,30\nBob,25\n", encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_tsv():
+    """Create a minimal .tsv fixture."""
+    path = FIXTURES / "sample.tsv"
+    path.write_text("Name\tAge\nAlice\t30\nBob\t25\n", encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_toml():
+    """Create a minimal .toml fixture."""
+    path = FIXTURES / "sample.toml"
+    path.write_text('[server]\nhost = "localhost"\nport = 8080\n', encoding="utf-8")
+    print(f"Created {path}")
+
+
+def make_ini():
+    """Create a minimal .ini fixture."""
+    path = FIXTURES / "sample.ini"
+    path.write_text("[server]\nhost = localhost\nport = 8080\n", encoding="utf-8")
+    print(f"Created {path}")
+
+
 if __name__ == "__main__":
     make_docx()
     make_pptx()
@@ -361,4 +413,11 @@ if __name__ == "__main__":
     make_xls()
     make_doc()
     make_ppt()
+    make_json()
+    make_yaml()
+    make_xml()
+    make_csv()
+    make_tsv()
+    make_toml()
+    make_ini()
     print("Done.")

@@ -98,6 +98,48 @@ def test_xls_stdout():
     assert "Sheet: Data" in result.stdout
 
 
+def test_json_stdout():
+    result = run_cli(str(FIXTURES / "sample.json"))
+    assert result.returncode == 0
+    assert "Alice" in result.stdout
+
+
+def test_yaml_stdout():
+    result = run_cli(str(FIXTURES / "sample.yaml"))
+    assert result.returncode == 0
+    assert "name: Alice" in result.stdout
+
+
+def test_xml_stdout():
+    result = run_cli(str(FIXTURES / "sample.xml"))
+    assert result.returncode == 0
+    assert "<root>" in result.stdout
+
+
+def test_csv_stdout():
+    result = run_cli(str(FIXTURES / "sample.csv"))
+    assert result.returncode == 0
+    assert "Alice" in result.stdout
+
+
+def test_tsv_stdout():
+    result = run_cli(str(FIXTURES / "sample.tsv"))
+    assert result.returncode == 0
+    assert "Alice" in result.stdout
+
+
+def test_toml_stdout():
+    result = run_cli(str(FIXTURES / "sample.toml"))
+    assert result.returncode == 0
+    assert "[server]" in result.stdout
+
+
+def test_ini_stdout():
+    result = run_cli(str(FIXTURES / "sample.ini"))
+    assert result.returncode == 0
+    assert "[server]" in result.stdout
+
+
 def test_output_flag(tmp_path):
     out = tmp_path / "output.md"
     result = run_cli(str(FIXTURES / "sample.docx"), "-o", str(out))
