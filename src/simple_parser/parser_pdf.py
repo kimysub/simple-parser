@@ -3,6 +3,7 @@
 Uses PyMuPDF (fitz) for non-OCR text extraction.
 Heading detection via font-size heuristic: text larger than the
 modal (most common) body font size is treated as a heading.
+Table detection via page.find_tables() for structured table extraction.
 """
 
 from collections import Counter
@@ -46,6 +47,57 @@ def _size_to_heading_level(size: float, body_size: float) -> int | None:
     return 3
 
 
+def _rect_overlaps(r1: fitz.Rect, r2: fitz.Rect) -> bool:
+    """Check if two rectangles overlap significantly (>50% of smaller area)."""
+    ix0 = max(r1.x0, r2.x0)
+    iy0 = max(r1.y0, r2.y0)
+    ix1 = min(r1.x1, r2.x1)
+    iy1 = min(r1.y1, r2.y1)
+    if ix0 >= ix1 or iy0 >= iy1:
+        return False
+    intersection = (ix1 - ix0) * (iy1 - iy0)
+    r2_area = (r2.x1 - r2.x0) * (r2.y1 - r2.y0)
+    if r2_area <= 0:
+        return False
+    return intersection / r2_area > 0.5
+
+
+def _block_in_table(block: dict, table_rects: list[fitz.Rect]) -> bool:
+    """Check if a text block overlaps with any table region."""
+    bbox = block.get("bbox")
+    if not bbox:
+        return False
+    block_rect = fitz.Rect(bbox)
+    return any(_rect_overlaps(tr, block_rect) for tr in table_rects)
+
+
+def _extract_tables(page: fitz.Page) -> tuple[list[str], list[fitz.Rect]]:
+    """Extract tables from a page as markdown, return (table_markdowns, table_rects)."""
+    tables_md: list[str] = []
+    table_rects: list[fitz.Rect] = []
+
+    finder = page.find_tables()
+    for table in finder.tables:
+        table_rects.append(fitz.Rect(table.bbox))
+        data = table.extract()
+        if not data:
+            continue
+
+        # Clean None values
+        cleaned = []
+        for row in data:
+            cleaned.append([cell if cell is not None else "" for cell in row])
+
+        if len(cleaned) < 1:
+            continue
+
+        headers = cleaned[0]
+        data_rows = cleaned[1:]
+        tables_md.append(md.table(headers, data_rows))
+
+    return tables_md, table_rects
+
+
 def parse(path: str) -> str:
     """Parse a .pdf file and return Markdown content."""
     doc = fitz.open(path)
@@ -55,10 +107,19 @@ def parse(path: str) -> str:
 
     for page in doc:
         lines: list[str] = []
+
+        # Extract tables first
+        tables_md, table_rects = _extract_tables(page)
+
+        # Extract text, skipping blocks that overlap with detected tables
         blocks = page.get_text("dict")["blocks"]
 
         for block in blocks:
             if block.get("type") != 0:
+                continue
+
+            # Skip text blocks inside table regions
+            if table_rects and _block_in_table(block, table_rects):
                 continue
 
             block_lines: list[str] = []
@@ -91,6 +152,11 @@ def parse(path: str) -> str:
                 lines.append(md.heading(text, block_heading_level))
             else:
                 lines.append(text)
+
+        # Insert tables at the end of the page content
+        # (positional insertion would require Y-coordinate sorting,
+        #  which adds complexity — tables at end is a reasonable default)
+        lines.extend(tables_md)
 
         if lines:
             page_blocks.append("\n\n".join(lines))

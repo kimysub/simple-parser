@@ -30,6 +30,7 @@
 - **Slide ordering**: Uses `ppt/_rels/presentation.xml.rels` for correct order, falls back to filename sorting
 - **Titles**: Detects `p:ph type="title"` and `type="ctrTitle"` placeholders → `## Slide N: Title`
 - **Body text**: Extracts all `a:t` text from non-title shapes
+- **Tables**: Detects `a:tbl` (DrawingML tables) inside `p:graphicFrame` elements → markdown tables
 
 ## XLSX Parser (`parser_xlsx.py`)
 - Parses three XML files from ZIP: `xl/sharedStrings.xml`, `xl/workbook.xml`, `xl/worksheets/sheet{N}.xml`
@@ -41,6 +42,7 @@
 ## PDF Parser (`parser_pdf.py`)
 - Uses PyMuPDF (`fitz`) — no OCR
 - **Text extraction**: `page.get_text("dict")` for structured block/line/span data
+- **Table detection**: `page.find_tables()` detects tables by cell boundaries, extracts as markdown tables, and excludes table regions from regular text extraction to prevent duplication
 - **Heading detection**: Font-size heuristic — computes modal body font size, then classifies larger text as `#` (≥1.8x), `##` (≥1.4x), or `###` (>1.1x)
 - **Page separation**: Pages joined with `---` horizontal rules
 - **Known limitation**: Mathematical equations may render incorrectly. PDFs store equations as individually positioned glyphs (not LaTeX/MathML), so spatial constructs like summations, fractions, superscripts, and subscripts get fragmented during text extraction. This is a fundamental limitation of text-based PDF extraction without OCR/vision models.

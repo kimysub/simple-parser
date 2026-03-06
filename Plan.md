@@ -172,3 +172,12 @@ Each parser exposes: `def parse(path: str) -> str` returning a Markdown string.
 - Extensions: `.json`, `.yaml`, `.yml`, `.xml`, `.csv`, `.tsv`, `.toml`, `.ini`, `.cfg`
 - No new external dependencies (stdlib only)
 - **Verify**: `pytest tests/` all green (146 passed, 10 skipped without LibreOffice)
+
+### Phase 12: Table Detection for PDF and PPTX
+- PDF: Add `page.find_tables()` (PyMuPDF) for structured table extraction from PDFs
+  - Detects tables by cell boundaries, extracts as markdown tables via `md.table()`
+  - Excludes table regions from regular text extraction (rectangle overlap check) to prevent duplication
+- PPTX: Add `a:tbl` (DrawingML table) parsing inside `p:graphicFrame` elements
+  - Extracts header row + data rows from `a:tr`/`a:tc` elements
+- Both produce proper markdown tables that integrate with the existing RAG pipeline
+- **Verify**: `pytest tests/` all green (152 passed, 10 skipped without LibreOffice)

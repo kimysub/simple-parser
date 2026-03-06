@@ -14,8 +14,9 @@
 | Phase 9 | Expanded file type support (xls, doc, ppt, txt, eml, mht, md) | 4 `test_xls` + 3 `test_doc` + 3 `test_ppt` + 5 `test_txt` + 5 `test_eml` + 4 `test_mht` + 2 `test_md_parser` + updated CLI/API | PASS |
 | Phase 10 | RAG post-processor + HTML-to-Markdown converter | 16 `test_rag` + 9 `test_md` html_to_md + 2 API RAG tests | PASS |
 | Phase 11 | Text data formats (json, yaml, xml, csv, tsv, toml, ini) | 3 `test_json` + 2 `test_yaml` + 2 `test_xml` + 4 `test_csv` + 4 `test_tsv` + 2 `test_toml` + 2 `test_ini` + 7 CLI + 14 API | PASS |
+| Phase 12 | Table detection for PDF and PPTX | 3 `test_pdf` table + 3 `test_pptx` table | PASS |
 
-**Total: 156 tests (146 passed, 10 skipped without LibreOffice)**
+**Total: 162 tests (152 passed, 10 skipped without LibreOffice)**
 
 ### Verification Commands
 ```bash

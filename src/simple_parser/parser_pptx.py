@@ -2,6 +2,7 @@
 
 PPTX files are ZIP archives. Slides are in ppt/slides/slide{N}.xml.
 Slide order is determined from ppt/presentation.xml relationships.
+Tables in slides are inside p:graphicFrame elements using a:tbl (DrawingML).
 """
 
 import re
@@ -52,13 +53,32 @@ def _extract_text(elem: ET.Element) -> str:
     return " ".join(texts)
 
 
+def _parse_table(tbl: ET.Element) -> str:
+    """Convert an a:tbl (DrawingML table) element to a markdown table."""
+    rows: list[list[str]] = []
+    for tr in tbl.findall(f"{{{A_NS}}}tr"):
+        cells: list[str] = []
+        for tc in tr.findall(f"{{{A_NS}}}tc"):
+            cell_text = _extract_text(tc).strip()
+            cells.append(cell_text)
+        rows.append(cells)
+
+    if not rows:
+        return ""
+
+    headers = rows[0]
+    data_rows = rows[1:]
+    return md.table(headers, data_rows)
+
+
 def _parse_slide(slide_xml: bytes, slide_num: int) -> str:
     """Parse a single slide XML and return markdown."""
     root = ET.fromstring(slide_xml)
     title = ""
     body_parts: list[str] = []
+    table_parts: list[str] = []
 
-    # Find all shape trees
+    # Find shapes (p:sp) for title and body text
     for sp in root.iter(f"{{{P_NS}}}sp"):
         # Check if this shape is a title placeholder
         nv_pr = sp.find(f".//{{{P_NS}}}nvPr")
@@ -83,6 +103,13 @@ def _parse_slide(slide_xml: bytes, slide_num: int) -> str:
         else:
             body_parts.append(text)
 
+    # Find tables inside graphicFrame elements
+    for gf in root.iter(f"{{{P_NS}}}graphicFrame"):
+        for tbl in gf.iter(f"{{{A_NS}}}tbl"):
+            table_md = _parse_table(tbl)
+            if table_md:
+                table_parts.append(table_md)
+
     lines: list[str] = []
     if title:
         lines.append(md.heading(f"Slide {slide_num}: {title}", 2))
@@ -91,6 +118,9 @@ def _parse_slide(slide_xml: bytes, slide_num: int) -> str:
 
     for part in body_parts:
         lines.append(part)
+
+    for table in table_parts:
+        lines.append(table)
 
     return "\n\n".join(lines)
 
