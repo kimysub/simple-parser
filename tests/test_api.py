@@ -26,6 +26,8 @@ def test_health():
 _ALL_FORMATS = [
     "sample.docx", "sample.pptx", "sample.xlsx", "sample.pdf",
     "sample.txt", "sample.eml", "sample.mht", "sample.md", "sample.xls",
+    "sample.json", "sample.yaml", "sample.xml", "sample.csv",
+    "sample.tsv", "sample.toml", "sample.ini",
     pytest.param("sample.doc", marks=pytest.mark.skipif(
         not _has_libreoffice or not (FIXTURES_DIR / "sample.doc").exists(),
         reason="LibreOffice or fixture not available",
@@ -87,6 +89,38 @@ def test_process_supported_formats(name):
     assert len(data["page_content"]) > 0
     assert data["metadata"]["source"] == name
     assert data["metadata"]["format"] == Path(name).suffix
+
+
+def test_process_returns_rag_clean_text():
+    """PUT /process should return RAG-optimized clean text, not raw markdown."""
+    path = FIXTURES_DIR / "sample.docx"
+    resp = client.put(
+        "/process",
+        content=path.read_bytes(),
+        headers={"X-Filename": "sample.docx"},
+    )
+    assert resp.status_code == 200
+    content = resp.json()["page_content"]
+    # Should not contain markdown formatting
+    assert "# " not in content
+    assert "**" not in content
+    assert "| --- |" not in content
+    # Should contain the actual text
+    assert "Test Heading" in content
+
+
+def test_process_xlsx_linearizes_tables():
+    """PUT /process should linearize tables for RAG."""
+    path = FIXTURES_DIR / "sample.xlsx"
+    resp = client.put(
+        "/process",
+        content=path.read_bytes(),
+        headers={"X-Filename": "sample.xlsx"},
+    )
+    assert resp.status_code == 200
+    content = resp.json()["page_content"]
+    assert "Name: Alice" in content
+    assert "|" not in content
 
 
 def test_process_mime_fallback():

@@ -1,20 +1,28 @@
 # Simple Parser
 
-CLI tool to parse document files into Markdown. Supports 11 formats.
+CLI tool to parse document files into Markdown. Supports 18 formats.
 
 ## Features
 
 - **DOCX**: Headings, paragraphs, bold/italic, tables, bullet/numbered lists
 - **PPTX**: Slide titles, body text, correct slide ordering
 - **XLSX**: Sheet names, shared strings, numeric values → markdown tables
-- **PDF**: Text extraction via PyMuPDF, font-size based heading detection
+- **PDF**: Text extraction via PyMuPDF, font-size based heading detection (⚠️ math equations may render incorrectly)
 - **XLS**: Legacy Excel (BIFF) via xlrd → markdown tables
 - **DOC**: Legacy Word via LibreOffice headless conversion → DOCX parser
 - **PPT**: Legacy PowerPoint via LibreOffice headless conversion → PPTX parser
 - **TXT**: Plain text with BOM-aware encoding detection (UTF-8, UTF-16LE/BE, latin-1 fallback)
 - **EML**: Email files — Subject/From/Date headers + text body + attachment list
-- **MHT/MHTML**: Web archive files — MIME HTML parsing with tag stripping
+- **MHT/MHTML**: Web archive files — MIME HTML-to-Markdown conversion
 - **MD**: Markdown pass-through
+- **JSON**: Pretty-printed JSON in code block
+- **YAML**: YAML in code block (`.yaml`, `.yml`)
+- **XML**: XML in code block
+- **CSV**: Comma-separated values → markdown tables
+- **TSV**: Tab-separated values → markdown tables
+- **TOML**: TOML in code block
+- **INI**: INI/CFG config files in code block (`.ini`, `.cfg`)
+- **RAG optimization**: `PUT /process` endpoint automatically strips markdown formatting, linearizes tables, and produces clean text for embedding models
 - **API**: FastAPI web server with `POST /parse` and `PUT /process` endpoints for HTTP-based parsing
 - **Open WebUI**: Compatible with Open WebUI's external document loader (`CONTENT_EXTRACTION_ENGINE=external`)
 - No OCR — fast, lightweight, XML-based parsing for Office formats
@@ -56,9 +64,19 @@ simple-parser notes.txt
 simple-parser message.eml
 simple-parser archive.mht
 simple-parser readme.md
+simple-parser data.json
+simple-parser config.yaml
+simple-parser feed.xml
+simple-parser data.csv
+simple-parser data.tsv
+simple-parser config.toml
+simple-parser config.ini
 
 # Save to file
 simple-parser document.docx -o output.md
+
+# RAG-optimized clean text (strips markdown formatting, linearizes tables)
+simple-parser document.docx --clean
 ```
 
 ### API Server
@@ -127,19 +145,27 @@ src/simple_parser/
   parser_ppt.py      # PPT  → Markdown (LibreOffice → PPTX)
   parser_txt.py      # TXT  → Markdown (BOM-aware encoding)
   parser_eml.py      # EML  → Markdown (email headers + body)
-  parser_mht.py      # MHT  → Markdown (MIME HTML strip)
+  parser_mht.py      # MHT  → Markdown (MIME HTML-to-Markdown)
   parser_md.py       # MD   → pass-through
+  parser_json.py     # JSON → Markdown (pretty-printed code block)
+  parser_yaml.py     # YAML → Markdown (code block)
+  parser_xml.py      # XML  → Markdown (code block)
+  parser_csv.py      # CSV  → Markdown table
+  parser_tsv.py      # TSV  → Markdown table
+  parser_toml.py     # TOML → Markdown (code block)
+  parser_ini.py      # INI  → Markdown (code block)
+  rag.py             # RAG post-processor (clean text for embedding)
 ```
 
 ## How It Works
 
 Office formats (docx, pptx, xlsx) are ZIP archives containing XML. The parsers use Python's stdlib `zipfile` + `xml.etree.ElementTree` to extract content — no external Office dependencies needed.
 
-PDF parsing uses PyMuPDF (`fitz`) for non-OCR text extraction with a font-size heuristic for heading detection.
+PDF parsing uses PyMuPDF (`fitz`) for non-OCR text extraction with a font-size heuristic for heading detection. Note: mathematical equations in PDFs may not render correctly — PDFs store equations as positioned glyphs rather than semantic math notation, so spatial constructs (summations, fractions, sub/superscripts) get fragmented during text extraction.
 
 Legacy Office formats (doc, ppt) are converted to their modern equivalents via LibreOffice headless, then parsed with existing parsers. XLS (BIFF) is parsed directly with xlrd.
 
-Text-based formats (txt, eml, mht, md) use Python stdlib only.
+Text-based formats (txt, eml, mht, md, json, yaml, xml, csv, tsv, toml, ini) use Python stdlib only.
 
 ## API Endpoints
 
@@ -151,14 +177,14 @@ Text-based formats (txt, eml, mht, md) use Python stdlib only.
 
 **`POST /parse`**: Parsed markdown is automatically saved to the output directory (`./output` by default, configurable via `OUTPUT_DIR` env var). In Docker, `./output` is volume-mounted to the host.
 
-**`PUT /process`**: Accepts raw file bytes in the request body. File format is determined from the `X-Filename` header (URL-encoded filename) or `Content-Type` MIME type as fallback. Supports optional `Authorization: Bearer <key>` when `API_KEY` env var is set.
+**`PUT /process`**: Accepts raw file bytes in the request body. File format is determined from the `X-Filename` header (URL-encoded filename) or `Content-Type` MIME type as fallback. Supports optional `Authorization: Bearer <key>` when `API_KEY` env var is set. Output is automatically post-processed for RAG: markdown formatting is stripped, tables are linearized to key-value rows, and slide numbering is removed for optimal embedding quality.
 
 Error responses: 400 (unsupported format / corrupt file / empty body), 401 (invalid API key), 422 (missing file), 500 (parse failure).
 
 ## Testing
 
 ```bash
-# Run all tests
+# Run all tests (156 total: 146 pass, 10 skip without LibreOffice)
 python -m pytest tests/ -v
 
 # Lint

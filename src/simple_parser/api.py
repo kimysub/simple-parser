@@ -10,17 +10,25 @@ from urllib.parse import unquote
 from fastapi import FastAPI, HTTPException, Request, UploadFile
 
 from simple_parser import (
+    parser_csv,
     parser_doc,
     parser_docx,
     parser_eml,
+    parser_ini,
+    parser_json,
     parser_md,
     parser_mht,
     parser_pdf,
     parser_ppt,
     parser_pptx,
+    parser_toml,
+    parser_tsv,
     parser_txt,
     parser_xls,
     parser_xlsx,
+    parser_xml,
+    parser_yaml,
+    rag,
 )
 
 app = FastAPI(title="simple-parser")
@@ -40,6 +48,15 @@ PARSERS = {
     ".mht": parser_mht.parse,
     ".mhtml": parser_mht.parse,
     ".md": parser_md.parse,
+    ".json": parser_json.parse,
+    ".yaml": parser_yaml.parse,
+    ".yml": parser_yaml.parse,
+    ".xml": parser_xml.parse,
+    ".csv": parser_csv.parse,
+    ".tsv": parser_tsv.parse,
+    ".toml": parser_toml.parse,
+    ".ini": parser_ini.parse,
+    ".cfg": parser_ini.parse,
 }
 
 SUPPORTED = ", ".join(PARSERS)
@@ -56,6 +73,14 @@ MIME_TO_EXT = {
     "message/rfc822": ".eml",
     "multipart/related": ".mht",
     "text/markdown": ".md",
+    "application/json": ".json",
+    "text/yaml": ".yaml",
+    "application/x-yaml": ".yaml",
+    "text/xml": ".xml",
+    "application/xml": ".xml",
+    "text/csv": ".csv",
+    "text/tab-separated-values": ".tsv",
+    "application/toml": ".toml",
 }
 
 
@@ -151,8 +176,10 @@ async def process(request: Request):
         if tmp_path:
             Path(tmp_path).unlink(missing_ok=True)
 
+    clean_text = rag.clean_for_rag(markdown)
+
     return {
-        "page_content": markdown,
+        "page_content": clean_text,
         "metadata": {
             "source": filename or "unknown",
             "format": ext,
