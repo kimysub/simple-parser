@@ -26,3 +26,8 @@ output/
 
 # OS
 .DS_Store
+
+# Claude Code (developer-local)
+settings.json
+commands/
+skills/
