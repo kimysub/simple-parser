@@ -50,7 +50,9 @@ def _extract_text(elem: ET.Element) -> str:
     for t in elem.iter(f"{{{A_NS}}}t"):
         if t.text:
             texts.append(t.text)
-    return " ".join(texts)
+    raw = " ".join(texts)
+    # Collapse multiple spaces (common in PPTX with split text runs)
+    return re.sub(r" {2,}", " ", raw)
 
 
 def _parse_table(tbl: ET.Element) -> str:

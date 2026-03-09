@@ -173,11 +173,21 @@ Each parser exposes: `def parse(path: str) -> str` returning a Markdown string.
 - No new external dependencies (stdlib only)
 - **Verify**: `pytest tests/` all green (146 passed, 10 skipped without LibreOffice)
 
-### Phase 12: Table Detection for PDF and PPTX
-- PDF: Add `page.find_tables()` (PyMuPDF) for structured table extraction from PDFs
-  - Detects tables by cell boundaries, extracts as markdown tables via `md.table()`
-  - Excludes table regions from regular text extraction (rectangle overlap check) to prevent duplication
-- PPTX: Add `a:tbl` (DrawingML table) parsing inside `p:graphicFrame` elements
-  - Extracts header row + data rows from `a:tr`/`a:tc` elements
-- Both produce proper markdown tables that integrate with the existing RAG pipeline
+### Phase 12: Table Detection & PDF/PPTX Quality Improvements
+- PDF table detection:
+  - Bordered tables via `page.find_tables()` (PyMuPDF), extracts as markdown tables via `md.table()`
+  - Borderless table detection for academic papers (`Table N:` pattern + per-line column grouping)
+  - Table caption preservation in output
+  - Rectangle overlap check to exclude table regions from regular text extraction (prevents duplication)
+- PDF text quality improvements:
+  - Smart body size detection: rounds font sizes to integers, uses max of sizes with >5% share AND >200 chars as effective body size
+  - Heading threshold: strict `<` boundary (not `<=`) for exact body size exclusion
+  - Heading min length (10 chars) to filter short labels
+  - Heading max length (200 chars) to filter paragraphs misclassified as headings
+  - Ligature normalization (ﬁ→fi, ﬂ→fl, ﬀ→ff, ﬃ→ffi, ﬄ→ffl)
+  - Whitespace collapse (multiple spaces → single space)
+- PPTX improvements:
+  - DrawingML table parsing (`a:tbl` inside `p:graphicFrame`), extracts header + data rows from `a:tr`/`a:tc`
+  - Whitespace collapse for split text runs
+- Benchmark: `tests/benchmark.py` scoring system (tables 30%, content 25%, headings 20%, whitespace 15%, length 10%) tested against 5 real documents, improved from 83/100 → 100/100 average score
 - **Verify**: `pytest tests/` all green (152 passed, 10 skipped without LibreOffice)

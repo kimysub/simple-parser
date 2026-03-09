@@ -30,7 +30,8 @@
 - **Slide ordering**: Uses `ppt/_rels/presentation.xml.rels` for correct order, falls back to filename sorting
 - **Titles**: Detects `p:ph type="title"` and `type="ctrTitle"` placeholders → `## Slide N: Title`
 - **Body text**: Extracts all `a:t` text from non-title shapes
-- **Tables**: Detects `a:tbl` (DrawingML tables) inside `p:graphicFrame` elements → markdown tables
+- **Tables**: Detects `a:tbl` (DrawingML tables) inside `p:graphicFrame` elements, extracts header row + data rows from `a:tr`/`a:tc` → markdown tables
+- **Whitespace collapse**: Multiple consecutive spaces collapsed to single space (common in PPTX with split text runs across `a:t` elements)
 
 ## XLSX Parser (`parser_xlsx.py`)
 - Parses three XML files from ZIP: `xl/sharedStrings.xml`, `xl/workbook.xml`, `xl/worksheets/sheet{N}.xml`
@@ -42,8 +43,12 @@
 ## PDF Parser (`parser_pdf.py`)
 - Uses PyMuPDF (`fitz`) — no OCR
 - **Text extraction**: `page.get_text("dict")` for structured block/line/span data
-- **Table detection**: `page.find_tables()` detects tables by cell boundaries, extracts as markdown tables, and excludes table regions from regular text extraction to prevent duplication
-- **Heading detection**: Font-size heuristic — computes modal body font size, then classifies larger text as `#` (≥1.8x), `##` (≥1.4x), or `###` (>1.1x)
+- **Bordered table detection**: `page.find_tables()` detects tables by cell boundaries, extracts as markdown tables, and excludes table regions from regular text extraction via rectangle overlap check to prevent duplication
+- **Borderless table detection**: Detects academic-style tables without borders — matches `Table N:` pattern, then groups subsequent blocks as header + data using per-line column grouping or multi-space splitting; preserves table captions in output
+- **Smart body size detection**: Rounds font sizes to nearest integer to merge rendering variations, then uses the largest size with significant share (>5% of total chars AND >200 chars) as effective body size — avoids treating common sub-heading sizes as headings
+- **Heading detection**: Font-size heuristic with strict `<` boundary — classifies text as `#` (≥1.8x body), `##` (≥1.4x), or `###` (≥1.2x); heading min length (10 chars) filters short labels, heading max length (200 chars) filters paragraphs
+- **Ligature normalization**: Converts typographic ligatures to plain text (ﬁ→fi, ﬂ→fl, ﬀ→ff, ﬃ→ffi, ﬄ→ffl)
+- **Whitespace collapse**: Multiple consecutive spaces collapsed to single space (common in PDFs with positioned text)
 - **Page separation**: Pages joined with `---` horizontal rules
 - **Known limitation**: Mathematical equations may render incorrectly. PDFs store equations as individually positioned glyphs (not LaTeX/MathML), so spatial constructs like summations, fractions, superscripts, and subscripts get fragmented during text extraction. This is a fundamental limitation of text-based PDF extraction without OCR/vision models.
 
