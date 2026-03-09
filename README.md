@@ -5,9 +5,9 @@ CLI tool to parse document files into Markdown. Supports 18 formats.
 ## Features
 
 - **DOCX**: Headings, paragraphs, bold/italic, tables, bullet/numbered lists
-- **PPTX**: Slide titles, body text, correct slide ordering
+- **PPTX**: Slide titles, body text, DrawingML tables (`a:tbl`), whitespace collapse for split text runs, correct slide ordering
 - **XLSX**: Sheet names, shared strings, numeric values → markdown tables
-- **PDF**: Text extraction via PyMuPDF, font-size based heading detection (⚠️ math equations may render incorrectly)
+- **PDF**: Text extraction via PyMuPDF, bordered and borderless table detection, smart font-size heading detection with length filters, ligature normalization, whitespace collapse (⚠️ math equations may render incorrectly)
 - **XLS**: Legacy Excel (BIFF) via xlrd → markdown tables
 - **DOC**: Legacy Word via LibreOffice headless conversion → DOCX parser
 - **PPT**: Legacy PowerPoint via LibreOffice headless conversion → PPTX parser
@@ -161,7 +161,7 @@ src/simple_parser/
 
 Office formats (docx, pptx, xlsx) are ZIP archives containing XML. The parsers use Python's stdlib `zipfile` + `xml.etree.ElementTree` to extract content — no external Office dependencies needed.
 
-PDF parsing uses PyMuPDF (`fitz`) for non-OCR text extraction with a font-size heuristic for heading detection. Note: mathematical equations in PDFs may not render correctly — PDFs store equations as positioned glyphs rather than semantic math notation, so spatial constructs (summations, fractions, sub/superscripts) get fragmented during text extraction.
+PDF parsing uses PyMuPDF (`fitz`) for non-OCR text extraction with bordered table detection (`page.find_tables()`), borderless table detection for academic papers (Table N: pattern + column grouping), smart body size detection (integer-rounded sizes, >5% share AND >200 chars threshold), heading length filters (10-200 chars), ligature normalization, and whitespace collapse. Note: mathematical equations in PDFs may not render correctly — PDFs store equations as positioned glyphs rather than semantic math notation, so spatial constructs (summations, fractions, sub/superscripts) get fragmented during text extraction.
 
 Legacy Office formats (doc, ppt) are converted to their modern equivalents via LibreOffice headless, then parsed with existing parsers. XLS (BIFF) is parsed directly with xlrd.
 
@@ -184,7 +184,7 @@ Error responses: 400 (unsupported format / corrupt file / empty body), 401 (inva
 ## Testing
 
 ```bash
-# Run all tests (156 total: 146 pass, 10 skip without LibreOffice)
+# Run all tests (162 total: 152 pass, 10 skip without LibreOffice)
 python -m pytest tests/ -v
 
 # Lint
